@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Image Loading Fix: Yeh tag kisi bhi browser mein images ko block hone se rokega -->
+    <meta name="referrer" content="no-referrer">
     <title>UC STORE | PREMIUM TOP-UP</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
@@ -44,7 +46,7 @@
                 <p id="nav-pubg-id" class="text-[10px] text-gray-400 font-bold tracking-widest uppercase">GUEST</p>
             </div>
             
-            <!-- Notification Bell Icon (Opens Notification Page) -->
+            <!-- Notification Bell Icon -->
             <div class="relative cursor-pointer bg-white/5 p-2 rounded-full" onclick="showView('notifications')">
                 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                 <span id="notif-badge" class="absolute -top-1 -right-1 bg-red-600 text-[10px] rounded-full h-4 w-4 flex items-center justify-center font-bold hidden">1</span>
@@ -102,23 +104,23 @@
             <div id="all-orders-list" class="grid gap-3"></div>
         </div>
 
-        <!-- View: Notifications (NEW PAGE) -->
+        <!-- View: Notifications -->
         <div id="view-notifications" class="view hidden">
             <h2 class="text-2xl font-bold italic border-l-4 border-red-500 pl-3 mb-6 uppercase">Notifications</h2>
-            <div id="notif-container" class="space-y-4">
-                <!-- Admin messages for specific user will show here -->
-            </div>
+            <div id="notif-container" class="space-y-4"></div>
         </div>
 
     </main>
 
     <!-- Modals -->
     <div id="modal-login" class="modal">
-        <div class="glass p-8 rounded-[2.5rem] w-full max-w-sm text-center border-yellow-400/20 border">
-            <div class="text-5xl mb-4">🎮</div>
+        <div class="glass p-8 rounded-[2.5rem] w-full max-w-sm text-center border-yellow-400/20 border relative">
+            <button onclick="closeModals()" class="absolute top-6 right-6 text-gray-500 hover:text-white">✕</button>
+            <div class="text-5xl mb-4 mt-2">🎮</div>
             <h3 class="text-2xl font-bold mb-2 italic uppercase">PUBG ID</h3>
+            <p class="text-xs text-gray-400 mb-6">Enter your ID to continue purchase</p>
             <input id="login-pubg-id" type="text" placeholder="ENTER GAME ID" class="w-full bg-black/40 p-4 rounded-2xl mb-6 outline-none border border-white/10 focus:border-yellow-400 text-center text-xl font-bold">
-            <button id="btn-login" onclick="handleLogin()" class="w-full btn-glow py-4 rounded-2xl">CONTINUE</button>
+            <button id="btn-login" onclick="handleLogin()" class="w-full btn-glow py-4 rounded-2xl">VERIFY & CONTINUE</button>
         </div>
     </div>
 
@@ -159,7 +161,8 @@
             settings: {},
             selectedProduct: null,
             selectedPayment: null,
-            currentOrderId: null
+            currentOrderId: null,
+            pendingBuy: null
         };
 
         window.addEventListener('popstate', function(event) {
@@ -187,11 +190,11 @@
         window.onload = async () => {
             history.pushState({view: 'home'}, '');
             if (state.pubgId) document.getElementById('nav-pubg-id').innerText = state.pubgId;
+            
             await loadSettings();
             await loadProducts();
-            if(!state.userId) {
-                document.getElementById('modal-login').classList.add('active');
-            } else {
+            
+            if(state.userId) {
                 updateCartCount();
             }
         };
@@ -203,11 +206,10 @@
                     const k = (s.Key || s.KEY || "").toUpperCase();
                     state.settings[k] = s.Value || s.VALUE;
                 });
-                checkUserSpecificNotification(); 
+                if(state.pubgId) checkUserSpecificNotification(); 
             }
         }
 
-        // --- Notification Logic ---
         function checkUserSpecificNotification() {
             const userKey = "MSG_" + state.pubgId;
             const msg = state.settings[userKey];
@@ -243,10 +245,22 @@
             const grid = document.getElementById('product-grid');
             const data = await apiCall('getProducts');
             if(!data) return;
-            grid.innerHTML = data.map(p => `
+            
+            grid.innerHTML = data.map(p => {
+                let imgUrl = p.IMAGE_URL || "";
+                
+                if (imgUrl.includes("drive.google.com")) {
+                    let match = imgUrl.match(/\/d\/([a-zA-Z0-9_-]+)/) || imgUrl.match(/id=([a-zA-Z0-9_-]+)/);
+                    if (match && match[1]) {
+                        imgUrl = "https://drive.google.com/uc?export=view&id=" + match[1];
+                    }
+                }
+
+                // Yahan FALLBACK IMAGE set kar di gayi hai, baqi sab code wesa hi hai
+                return `
                 <div class="card-premium p-3 flex flex-col h-full">
                     <div class="w-full aspect-square flex items-center justify-center mb-3 bg-white/5 rounded-xl overflow-hidden">
-                        <img src="${p.IMAGE_URL}" class="max-h-[85%] max-w-[85%] object-contain drop-shadow-2xl" onerror="this.src='https://via.placeholder.com/150?text=UC'">
+                        <img src="${imgUrl}" class="max-h-[85%] max-w-[85%] object-contain drop-shadow-2xl" onerror="this.onerror=null; this.src='https://i.postimg.cc/k5yFzYhH/uc.png';">
                     </div>
                     <div class="flex justify-between items-center mb-4 px-1 text-sm font-bold tracking-tight">
                         <span class="text-white">${p.UC} UC</span>
@@ -256,16 +270,26 @@
                         BUY NOW
                     </button>
                 </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
+        // ================= BUY NOW LOGIC =================
         function openOrderModal(uc, rs) {
+            if (!state.userId || !state.pubgId) {
+                state.pendingBuy = { uc, rs };
+                document.getElementById('modal-login').classList.add('active');
+                return;
+            }
+
             state.selectedProduct = { uc, rs };
             state.selectedPayment = null;
             document.getElementById('order-uc').innerText = uc + " UC";
             document.getElementById('order-rs').innerText = rs + " RS";
+            
             const jcNum = state.settings.JAZZCASH || 'N/A';
             const epNum = state.settings.EASYPAISA || 'N/A';
+            
             document.getElementById('payment-methods-container').innerHTML = `
                 <div onclick="selectPayment('JazzCash', '${jcNum}')" id="pay-JazzCash" class="p-4 glass rounded-2xl cursor-pointer flex justify-between items-center border border-white/5 transition-all">
                     <div class="flex items-center gap-3">
@@ -314,19 +338,39 @@
             }
         }
 
+        // ================= LOGIN / VERIFICATION =================
         async function handleLogin() {
             const input = document.getElementById('login-pubg-id');
             const btn = document.getElementById('btn-login');
-            if(!input.value) return;
-            btn.innerHTML = `<span class="loader"></span>`;
-            const res = await apiPost('createUser', { pubgId: input.value });
-            if(res) {
-                state.userId = res.USER_ID; state.pubgId = res.PUBG_ID;
-                localStorage.setItem('uc_uid', res.USER_ID); localStorage.setItem('uc_pid', res.PUBG_ID);
-                document.getElementById('nav-pubg-id').innerText = res.PUBG_ID;
-                closeModals(); updateCartCount();
-                checkUserSpecificNotification(); 
+            if(!input.value) {
+                alert("Please enter a valid PUBG ID!");
+                return;
             }
+            
+            btn.innerHTML = `<span class="loader"></span> VERIFYING...`;
+            
+            const res = await apiPost('createUser', { pubgId: input.value });
+            
+            if(res && res.USER_ID) {
+                state.userId = res.USER_ID; 
+                state.pubgId = res.PUBG_ID;
+                
+                localStorage.setItem('uc_uid', res.USER_ID); 
+                localStorage.setItem('uc_pid', res.PUBG_ID);
+                document.getElementById('nav-pubg-id').innerText = res.PUBG_ID;
+                
+                closeModals(); 
+                updateCartCount();
+                checkUserSpecificNotification(); 
+                
+                if (state.pendingBuy) {
+                    openOrderModal(state.pendingBuy.uc, state.pendingBuy.rs);
+                    state.pendingBuy = null;
+                }
+            } else {
+                alert("Verification Failed! Please try again.");
+            }
+            btn.innerText = "VERIFY & CONTINUE";
         }
 
         async function handleUpdateId() {
@@ -400,7 +444,6 @@
             document.querySelectorAll('.view').forEach(el => el.classList.add('hidden'));
             document.getElementById('view-'+v).classList.remove('hidden');
             
-            // Mark notifications as read when entering the page
             if(v === 'notifications') {
                 const userKey = "MSG_" + state.pubgId;
                 const msg = state.settings[userKey];
@@ -418,7 +461,7 @@
         }
 
         function toggleMenu(s) { document.getElementById('side-menu').classList.toggle('active', s); document.getElementById('overlay').classList.toggle('hidden', !s); }
-        function closeModals() { document.querySelectorAll('.modal').forEach(m => m.classList.remove('active')); }
+        function closeModals() { document.querySelectorAll('.modal').forEach(m => m.classList.remove('active')); state.pendingBuy = null; }
         async function updateCartCount() {
             const orders = await apiCall('getOrders', { userId: state.userId });
             if(orders) document.getElementById('cart-count').innerText = orders.length;
@@ -429,4 +472,4 @@
         function contactSupport() { window.open(`https://wa.me/${state.settings.SUPPORT_WHATSAPP || "923253424968"}?text=Hi`, '_blank'); }
     </script>
 </body>
-</html>
+                </html>
