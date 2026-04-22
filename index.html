@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Image Loading Fix: Yeh tag kisi bhi browser mein images ko block hone se rokega -->
+    <meta name="referrer" content="no-referrer">
     <title>UC STORE | PREMIUM TOP-UP</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
@@ -37,12 +39,20 @@
     <nav class="fixed top-0 w-full h-16 glass flex items-center justify-between px-6 z-[100] border-b border-white/5">
         <div class="flex items-center gap-4">
             <button onclick="toggleMenu(true)" class="p-2 text-2xl text-yellow-400">☰</button>
-            <h1 class="font-bold text-2xl italic tracking-tight">UC <span class="text-yellow-400">STORE</span></h1>
+            <h1 onclick="showView('home')" class="font-bold text-2xl italic tracking-tight cursor-pointer">UC <span class="text-yellow-400">STORE</span></h1>
         </div>
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-3">
             <div class="hidden sm:block text-right">
                 <p id="nav-pubg-id" class="text-[10px] text-gray-400 font-bold tracking-widest uppercase">GUEST</p>
             </div>
+            
+            <!-- Notification Bell Icon -->
+            <div class="relative cursor-pointer bg-white/5 p-2 rounded-full" onclick="showView('notifications')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                <span id="notif-badge" class="absolute -top-1 -right-1 bg-red-600 text-[10px] rounded-full h-4 w-4 flex items-center justify-center font-bold hidden">1</span>
+            </div>
+
+            <!-- Shopping Cart Icon -->
             <div class="relative cursor-pointer bg-white/5 p-2 rounded-full" onclick="showView('my-orders')">
                 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
                 <span id="cart-count" class="absolute -top-1 -right-1 bg-red-600 text-[10px] rounded-full h-4 w-4 flex items-center justify-center font-bold">0</span>
@@ -63,42 +73,54 @@
             <div onclick="showView('live-activity')" class="nav-item"><span>🌐</span> Live Orders Feed</div>
             <hr class="border-white/5 my-6">
             <div onclick="watchTutorial()" class="nav-item text-red-400 font-bold bg-red-400/5"><span>🎬</span> How to Buy?</div>
-            <!-- Added Tournament Group Item -->
             <div onclick="openTournament()" class="nav-item text-yellow-500 font-bold"><span>🏆</span> Tournament Group</div>
-            <div onclick="openUpdateIdModal()" class="nav-item text-blue-400"><span>✏️</span> Change Game ID</div>
+            <div onclick="openUpdateIdModal()" class="nav-item text-blue-400"><span>✏️</span> update PUBG ID</div>
             <div onclick="contactSupport()" class="nav-item text-green-400 mt-10 border border-green-500/20 bg-green-500/5"><span>💬</span> WhatsApp Support</div>
         </div>
     </div>
 
     <!-- Main Content -->
     <main class="mt-24 px-4 pb-20 max-w-7xl mx-auto">
+        
+        <!-- View: Home -->
         <div id="view-home" class="view">
             <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                 <div class="col-span-full py-20 text-center opacity-30 animate-pulse text-2xl uppercase">Loading Store...</div>
             </div>
         </div>
 
+        <!-- View: My Orders -->
         <div id="view-my-orders" class="view hidden">
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold italic border-l-4 border-yellow-400 pl-3">MY ORDERS</h2>
+                <h2 class="text-2xl font-bold italic border-l-4 border-yellow-400 pl-3 uppercase">My Orders</h2>
                 <button onclick="loadMyOrders()" class="text-xs bg-white/5 px-4 py-2 rounded-lg font-bold">REFRESH</button>
             </div>
             <div id="my-orders-list" class="space-y-4"></div>
         </div>
 
+        <!-- View: Live Activity -->
         <div id="view-live-activity" class="view hidden">
-            <h2 class="text-2xl font-bold mb-6 italic border-l-4 border-blue-400 pl-3">LIVE FEED</h2>
+            <h2 class="text-2xl font-bold mb-6 italic border-l-4 border-blue-400 pl-3 uppercase">Live Feed</h2>
             <div id="all-orders-list" class="grid gap-3"></div>
         </div>
+
+        <!-- View: Notifications -->
+        <div id="view-notifications" class="view hidden">
+            <h2 class="text-2xl font-bold italic border-l-4 border-red-500 pl-3 mb-6 uppercase">Notifications</h2>
+            <div id="notif-container" class="space-y-4"></div>
+        </div>
+
     </main>
 
     <!-- Modals -->
     <div id="modal-login" class="modal">
-        <div class="glass p-8 rounded-[2.5rem] w-full max-w-sm text-center border-yellow-400/20 border">
-            <div class="text-5xl mb-4">🎮</div>
-            <h3 class="text-2xl font-bold mb-2 italic">LOGIN</h3>
+        <div class="glass p-8 rounded-[2.5rem] w-full max-w-sm text-center border-yellow-400/20 border relative">
+            <button onclick="closeModals()" class="absolute top-6 right-6 text-gray-500 hover:text-white">✕</button>
+            <div class="text-5xl mb-4 mt-2">🎮</div>
+            <h3 class="text-2xl font-bold mb-2 italic uppercase">PUBG ID</h3>
+            <p class="text-xs text-gray-400 mb-6">Enter your ID to continue purchase</p>
             <input id="login-pubg-id" type="text" placeholder="ENTER GAME ID" class="w-full bg-black/40 p-4 rounded-2xl mb-6 outline-none border border-white/10 focus:border-yellow-400 text-center text-xl font-bold">
-            <button id="btn-login" onclick="handleLogin()" class="w-full btn-glow py-4 rounded-2xl">CONTINUE</button>
+            <button id="btn-login" onclick="handleLogin()" class="w-full btn-glow py-4 rounded-2xl">VERIFY & CONTINUE</button>
         </div>
     </div>
 
@@ -108,23 +130,23 @@
             <h3 id="order-uc" class="text-3xl font-black italic mb-1 text-white"></h3>
             <p id="order-rs" class="text-yellow-400 text-2xl font-black italic mb-8"></p>
             <div id="payment-methods-container" class="space-y-4 mb-8"></div>
-            <button id="btn-place-order" disabled onclick="placeOrder()" class="w-full py-4 rounded-2xl font-bold bg-gray-800 text-gray-500">SELECT METHOD</button>
+            <button id="btn-place-order" disabled onclick="placeOrder()" class="w-full py-4 rounded-2xl font-bold bg-gray-800 text-gray-500 uppercase">Confirm Order</button>
         </div>
     </div>
 
     <div id="modal-verify" class="modal">
         <div class="glass p-8 rounded-[2.5rem] w-full max-w-sm relative text-center">
             <button onclick="closeModals()" class="absolute top-6 right-6 text-gray-500">✕</button>
-            <h3 class="text-2xl font-bold mb-6 italic">VERIFY TID</h3>
-            <input id="verify-tx-id" type="text" placeholder="TRANSACTION ID" class="w-full bg-black/40 p-4 rounded-2xl mb-6 outline-none border border-white/10 text-center text-xl">
-            <button id="btn-submit-tid" onclick="submitVerification()" class="w-full bg-green-600 py-4 rounded-2xl font-bold uppercase">Submit TID</button>
+            <h3 class="text-2xl font-bold mb-6 italic uppercase">Verify TID</h3>
+            <input id="verify-tx-id" type="text" placeholder="TRANSACTION ID" class="w-full bg-black/40 p-4 rounded-2xl mb-6 outline-none border border-white/10 text-center text-xl font-bold">
+            <button id="btn-submit-tid" onclick="submitVerification()" class="w-full bg-green-600 py-4 rounded-2xl font-bold uppercase shadow-lg">Submit TID</button>
         </div>
     </div>
 
     <div id="modal-update-id" class="modal">
         <div class="glass p-8 rounded-[2.5rem] w-full max-w-sm relative text-center">
             <button onclick="closeModals()" class="absolute top-6 right-6 text-gray-500">✕</button>
-            <h3 class="text-2xl font-bold mb-6 italic text-blue-400">UPDATE ID</h3>
+            <h3 class="text-2xl font-bold mb-6 italic text-blue-400 uppercase">Update ID</h3>
             <input id="update-pubg-id" type="text" class="w-full bg-black/40 p-4 rounded-2xl mb-6 border border-white/10 text-center font-bold text-xl">
             <button id="btn-update-id" onclick="handleUpdateId()" class="w-full bg-blue-600 py-4 rounded-2xl font-bold uppercase">Update Now</button>
         </div>
@@ -139,8 +161,16 @@
             settings: {},
             selectedProduct: null,
             selectedPayment: null,
-            currentOrderId: null
+            currentOrderId: null,
+            pendingBuy: null
         };
+
+        window.addEventListener('popstate', function(event) {
+            const homeView = document.getElementById('view-home');
+            if (homeView && homeView.classList.contains('hidden')) {
+                showView('home', false);
+            }
+        });
 
         async function apiCall(action, params = {}) {
             try {
@@ -158,12 +188,13 @@
         }
 
         window.onload = async () => {
+            history.pushState({view: 'home'}, '');
             if (state.pubgId) document.getElementById('nav-pubg-id').innerText = state.pubgId;
+            
             await loadSettings();
             await loadProducts();
-            if(!state.userId) {
-                document.getElementById('modal-login').classList.add('active');
-            } else {
+            
+            if(state.userId) {
                 updateCartCount();
             }
         };
@@ -175,6 +206,38 @@
                     const k = (s.Key || s.KEY || "").toUpperCase();
                     state.settings[k] = s.Value || s.VALUE;
                 });
+                if(state.pubgId) checkUserSpecificNotification(); 
+            }
+        }
+
+        function checkUserSpecificNotification() {
+            const userKey = "MSG_" + state.pubgId;
+            const msg = state.settings[userKey];
+            const lastRead = localStorage.getItem('notif_read_' + state.pubgId);
+            
+            if (msg && msg.trim() !== "" && msg !== lastRead) {
+                document.getElementById('notif-badge').classList.remove('hidden');
+            }
+            renderNotifications();
+        }
+
+        function renderNotifications() {
+            const container = document.getElementById('notif-container');
+            const userKey = "MSG_" + state.pubgId;
+            const msg = state.settings[userKey];
+
+            if (msg && msg.trim() !== "") {
+                container.innerHTML = `
+                    <div class="glass p-6 rounded-[2rem] border-l-4 border-yellow-400">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-yellow-400 font-bold uppercase text-xs">Admin Message</span>
+                            <span class="text-[10px] opacity-50 uppercase">${new Date().toLocaleDateString()}</span>
+                        </div>
+                        <p class="text-lg leading-relaxed">${msg}</p>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `<div class="text-center py-20 opacity-30 uppercase font-bold tracking-widest">No New Notifications</div>`;
             }
         }
 
@@ -182,10 +245,22 @@
             const grid = document.getElementById('product-grid');
             const data = await apiCall('getProducts');
             if(!data) return;
-            grid.innerHTML = data.map(p => `
+            
+            grid.innerHTML = data.map(p => {
+                let imgUrl = p.IMAGE_URL || "";
+                
+                if (imgUrl.includes("drive.google.com")) {
+                    let match = imgUrl.match(/\/d\/([a-zA-Z0-9_-]+)/) || imgUrl.match(/id=([a-zA-Z0-9_-]+)/);
+                    if (match && match[1]) {
+                        imgUrl = "https://drive.google.com/uc?export=view&id=" + match[1];
+                    }
+                }
+
+                // Yahan FALLBACK IMAGE set kar di gayi hai, baqi sab code wesa hi hai
+                return `
                 <div class="card-premium p-3 flex flex-col h-full">
                     <div class="w-full aspect-square flex items-center justify-center mb-3 bg-white/5 rounded-xl overflow-hidden">
-                        <img src="${p.IMAGE_URL}" class="max-h-[85%] max-w-[85%] object-contain drop-shadow-2xl" onerror="this.src='https://via.placeholder.com/150?text=UC'">
+                        <img src="${imgUrl}" class="max-h-[85%] max-w-[85%] object-contain drop-shadow-2xl" onerror="this.onerror=null; this.src='https://i.postimg.cc/k5yFzYhH/uc.png';">
                     </div>
                     <div class="flex justify-between items-center mb-4 px-1 text-sm font-bold tracking-tight">
                         <span class="text-white">${p.UC} UC</span>
@@ -195,16 +270,26 @@
                         BUY NOW
                     </button>
                 </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
+        // ================= BUY NOW LOGIC =================
         function openOrderModal(uc, rs) {
+            if (!state.userId || !state.pubgId) {
+                state.pendingBuy = { uc, rs };
+                document.getElementById('modal-login').classList.add('active');
+                return;
+            }
+
             state.selectedProduct = { uc, rs };
             state.selectedPayment = null;
             document.getElementById('order-uc').innerText = uc + " UC";
             document.getElementById('order-rs').innerText = rs + " RS";
+            
             const jcNum = state.settings.JAZZCASH || 'N/A';
             const epNum = state.settings.EASYPAISA || 'N/A';
+            
             document.getElementById('payment-methods-container').innerHTML = `
                 <div onclick="selectPayment('JazzCash', '${jcNum}')" id="pay-JazzCash" class="p-4 glass rounded-2xl cursor-pointer flex justify-between items-center border border-white/5 transition-all">
                     <div class="flex items-center gap-3">
@@ -223,7 +308,7 @@
             `;
             const btn = document.getElementById('btn-place-order');
             btn.disabled = true; btn.innerText = "SELECT METHOD";
-            btn.className = "w-full py-4 rounded-2xl font-bold bg-gray-800 text-gray-500";
+            btn.className = "w-full py-4 rounded-2xl font-bold bg-gray-800 text-gray-500 uppercase";
             document.getElementById('modal-order').classList.add('active');
         }
 
@@ -247,24 +332,45 @@
                 payment: state.selectedPayment
             });
             if(res && res.status === "success") {
-                closeModals(); showView('my-orders'); updateCartCount();
+                closeModals(); showView('home'); updateCartCount();
             } else {
                 alert("Order Failed."); btn.innerText = "CONFIRM ORDER"; btn.disabled = false;
             }
         }
 
+        // ================= LOGIN / VERIFICATION =================
         async function handleLogin() {
             const input = document.getElementById('login-pubg-id');
             const btn = document.getElementById('btn-login');
-            if(!input.value) return;
-            btn.innerHTML = `<span class="loader"></span>`;
-            const res = await apiPost('createUser', { pubgId: input.value });
-            if(res) {
-                state.userId = res.USER_ID; state.pubgId = res.PUBG_ID;
-                localStorage.setItem('uc_uid', res.USER_ID); localStorage.setItem('uc_pid', res.PUBG_ID);
-                document.getElementById('nav-pubg-id').innerText = res.PUBG_ID;
-                closeModals(); updateCartCount();
+            if(!input.value) {
+                alert("Please enter a valid PUBG ID!");
+                return;
             }
+            
+            btn.innerHTML = `<span class="loader"></span> VERIFYING...`;
+            
+            const res = await apiPost('createUser', { pubgId: input.value });
+            
+            if(res && res.USER_ID) {
+                state.userId = res.USER_ID; 
+                state.pubgId = res.PUBG_ID;
+                
+                localStorage.setItem('uc_uid', res.USER_ID); 
+                localStorage.setItem('uc_pid', res.PUBG_ID);
+                document.getElementById('nav-pubg-id').innerText = res.PUBG_ID;
+                
+                closeModals(); 
+                updateCartCount();
+                checkUserSpecificNotification(); 
+                
+                if (state.pendingBuy) {
+                    openOrderModal(state.pendingBuy.uc, state.pendingBuy.rs);
+                    state.pendingBuy = null;
+                }
+            } else {
+                alert("Verification Failed! Please try again.");
+            }
+            btn.innerText = "VERIFY & CONTINUE";
         }
 
         async function handleUpdateId() {
@@ -277,6 +383,7 @@
                 state.pubgId = newId; localStorage.setItem('uc_pid', newId);
                 document.getElementById('nav-pubg-id').innerText = newId;
                 alert("ID Updated!"); closeModals();
+                checkUserSpecificNotification(); 
             }
             btn.innerText = "UPDATE NOW";
         }
@@ -298,7 +405,7 @@
                         <p class="text-[10px] text-gray-500 font-bold uppercase">REF: ${o.ORDER_ID}</p>
                     </div>
                     <div class="text-right">
-                        <p class="text-yellow-400 font-bold text-xl">${o.RS} RS</p>
+                        <p class="text-yellow-400 font-bold text-xl uppercase">${o.RS} RS</p>
                         ${o.STATUS === 'PENDING' ? `<p class="text-[10px] text-yellow-500 animate-pulse font-bold">TAP TO VERIFY</p>` : ''}
                     </div>
                 </div>
@@ -333,23 +440,34 @@
             btn.innerText = "SUBMIT TID";
         }
 
-        function showView(v) {
+        function showView(v, push = true) {
             document.querySelectorAll('.view').forEach(el => el.classList.add('hidden'));
             document.getElementById('view-'+v).classList.remove('hidden');
+            
+            if(v === 'notifications') {
+                const userKey = "MSG_" + state.pubgId;
+                const msg = state.settings[userKey];
+                if(msg) {
+                    localStorage.setItem('notif_read_' + state.pubgId, msg);
+                    document.getElementById('notif-badge').classList.add('hidden');
+                }
+                renderNotifications();
+            }
+            
             if(v === 'my-orders') loadMyOrders();
             if(v === 'live-activity') loadAllOrders();
             toggleMenu(false); window.scrollTo(0,0);
+            if(push && v !== 'home') history.pushState({view: v}, '');
         }
 
         function toggleMenu(s) { document.getElementById('side-menu').classList.toggle('active', s); document.getElementById('overlay').classList.toggle('hidden', !s); }
-        function closeModals() { document.querySelectorAll('.modal').forEach(m => m.classList.remove('active')); }
+        function closeModals() { document.querySelectorAll('.modal').forEach(m => m.classList.remove('active')); state.pendingBuy = null; }
         async function updateCartCount() {
             const orders = await apiCall('getOrders', { userId: state.userId });
             if(orders) document.getElementById('cart-count').innerText = orders.length;
         }
         function openUpdateIdModal() { document.getElementById('update-pubg-id').value = state.pubgId; document.getElementById('modal-update-id').classList.add('active'); toggleMenu(false); }
         function watchTutorial() { window.open(state.settings.VIDEO_LINK || "https://youtube.com", '_blank'); }
-        // Added Tournament Function
         function openTournament() { window.open(state.settings.TOURNAMENT_LINK || "https://chat.whatsapp.com", '_blank'); }
         function contactSupport() { window.open(`https://wa.me/${state.settings.SUPPORT_WHATSAPP || "923253424968"}?text=Hi`, '_blank'); }
     </script>
